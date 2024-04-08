@@ -6,15 +6,26 @@ set(D_COMPILER "ldc2")
 set(D_COMPILER_FLAGS "--mtriple=riscv32-unknown-none-elf" "--mattr=+m,+c,+a" "-c" "-betterC")
 
 if(NOT CMAKE_BUILD_EARLY_EXPANSION)
+     list(APPEND include_dirs ${CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES})
+
+     foreach(DIR IN LISTS BUILD_COMPONENT_DIRS)
+          list(APPEND include_dirs "${DIR}/include")
+     endforeach()
+
+     add_custom_target(d_binding)
      set(d_bindings_dir "${CMAKE_BINARY_DIR}/d_bindings")
 
-     add_custom_target(
-          d_bindings
-          ALL
-          COMMENT "Preprocess *.h files to *.i files"
-          COMMAND "${CMAKE_SOURCE_DIR}/preprocess.sh" ${d_bindings_dir} ${d_bindings_dir} ${C_COMPILER} ${CMAKE_C_FLAGS}
-          OUTPUT ${D_OBJ_PATH}
-     )
+     foreach(DIR IN LISTS include_dirs)
+          message(STATUS "Preprocess headers in ${DIR}")
+
+          add_custom_command(
+               TARGET d_binding
+               COMMAND "${CMAKE_SOURCE_DIR}/preprocess.sh"
+               ARGS ${CMAKE_C_COMPILER} ${CMAKE_C_FLAGS} ${DIR} ${d_bindings_dir}
+               VERBATIM
+          )
+
+     endforeach()
 
      set(D_OBJ_PATH "${CMAKE_BINARY_DIR}/d_obj.o")
 
@@ -22,6 +33,7 @@ if(NOT CMAKE_BUILD_EARLY_EXPANSION)
           OUTPUT ${D_OBJ_PATH}
           COMMAND ${D_COMPILER} ${D_COMPILER_FLAGS} "-I${d_bindings_dir}" "-of=${D_OBJ_PATH}"
           "${CMAKE_SOURCE_DIR}/main/d/main.d"
+          DEPENDS d_binding
      )
      add_library(d_obj STATIC ${D_OBJ_PATH})
      set_target_properties(d_obj PROPERTIES LINKER_LANGUAGE C)
