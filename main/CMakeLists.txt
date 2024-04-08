@@ -6,11 +6,21 @@ set(D_COMPILER "ldc2")
 set(D_COMPILER_FLAGS "--mtriple=riscv32-unknown-none-elf" "--mattr=+m,+c,+a" "-c" "-betterC")
 
 if(NOT CMAKE_BUILD_EARLY_EXPANSION)
+     set(d_bindings_dir "${CMAKE_BINARY_DIR}/d_bindings")
+
+     add_custom_target(
+          d_bindings
+          ALL
+          COMMENT "Preprocess *.h files to *.i files"
+          COMMAND "${CMAKE_SOURCE_DIR}/preprocess.sh" ${d_bindings_dir} ${d_bindings_dir} ${C_COMPILER} ${CMAKE_C_FLAGS}
+          OUTPUT ${D_OBJ_PATH}
+     )
+
      set(D_OBJ_PATH "${CMAKE_BINARY_DIR}/d_obj.o")
 
      add_custom_command(
           OUTPUT ${D_OBJ_PATH}
-          COMMAND ${D_COMPILER} ${D_COMPILER_FLAGS} "-of=${D_OBJ_PATH}"
+          COMMAND ${D_COMPILER} ${D_COMPILER_FLAGS} "-I${d_bindings_dir}" "-of=${D_OBJ_PATH}"
           "${CMAKE_SOURCE_DIR}/main/d/main.d"
      )
      add_library(d_obj STATIC ${D_OBJ_PATH})
