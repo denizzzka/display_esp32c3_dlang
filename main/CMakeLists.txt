@@ -6,25 +6,26 @@ set(D_COMPILER "ldc2")
 set(D_COMPILER_FLAGS "--mtriple=riscv32-unknown-none-elf" "--mattr=+m,+c,+a" "-c" "-betterC")
 
 if(NOT CMAKE_BUILD_EARLY_EXPANSION)
-     list(APPEND include_dirs ${CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES})
-
-     foreach(DIR IN LISTS BUILD_COMPONENT_DIRS)
-          list(APPEND include_dirs "${DIR}/include")
-     endforeach()
+     #~ list(APPEND include_dirs ${CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES})
 
      add_custom_target(d_binding)
      set(d_bindings_dir "${CMAKE_BINARY_DIR}/d_bindings")
 
-     foreach(DIR IN LISTS include_dirs)
-          message(STATUS "Preprocess headers in ${DIR}")
+     idf_build_get_property(build_components BUILD_COMPONENTS)
+     foreach(compo IN LISTS "_implicit" build_components)
+          idf_component_get_property(compo_dir ${compo} COMPONENT_DIR)
+          idf_component_get_property(compo_include_dirs ${compo} INCLUDE_DIRS)
 
-          add_custom_command(
-               TARGET d_binding
-               COMMAND "${CMAKE_SOURCE_DIR}/preprocess.sh"
-               ARGS ${CMAKE_C_COMPILER} ${CMAKE_C_FLAGS} ${DIR} ${d_bindings_dir}
-               VERBATIM
-          )
+          foreach(incl_dir IN LISTS compo_include_dirs)
+               message(STATUS "Preprocess headers in ${compo_dir}/${incl_dir}")
 
+               add_custom_command(
+                    TARGET d_binding
+                    COMMAND "${CMAKE_SOURCE_DIR}/preprocess.sh"
+                    ARGS ${CMAKE_C_COMPILER} ${CMAKE_C_FLAGS} "${compo_dir}/${incl_dir}" "${d_bindings_dir}/${compo}"
+                    VERBATIM
+               )
+          endforeach()
      endforeach()
 
      set(D_OBJ_PATH "${CMAKE_BINARY_DIR}/d_obj.o")
