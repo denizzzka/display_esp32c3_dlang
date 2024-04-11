@@ -7,8 +7,7 @@ set(D_COMPILER_FLAGS "--mtriple=riscv32-unknown-none-elf" "--mattr=+m,+c,+a" "-c
 
 if(NOT CMAKE_BUILD_EARLY_EXPANSION)
      add_custom_target(d_binding)
-     set(d_bindings_dir "${CMAKE_BINARY_DIR}/d_bindings")
-
+     set(d_bindings_dir "${CMAKE_BINARY_DIR}/esp-idf")
      set(D_OBJ_PATH "${CMAKE_BINARY_DIR}/d_obj.o")
 
      add_custom_command(
