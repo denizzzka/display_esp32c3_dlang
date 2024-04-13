@@ -5,7 +5,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 # Preserve *.i files
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -save-temps")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -save-temps -D__machine_off64_t_defined -include ${CMAKE_SOURCE_DIR}/private_include/local_typedefs.h")
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 project(mcu_software)
