@@ -4,7 +4,7 @@
 //~ #include "freertos/FreeRTOS.h"
 //~ #include "freertos/task.h"
 //~ #include "driver/gpio.h"
-import driver.CMakeFiles.__idf_driver_dir.gpio.gpio;
+import gpio;
 
 //~ #include "esp_log.h"
 //~ #include "led_strip.h"
