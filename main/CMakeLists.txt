@@ -4,7 +4,7 @@ if(NOT (${IDF_TARGET} STREQUAL "esp32c3"))
 endif()
 
 set(D_COMPILER "ldc2")
-set(D_COMPILER_FLAGS "--mtriple=riscv32-unknown-none-elf" "--mattr=+m,+c,+a" "-c" "-betterC")
+set(D_COMPILER_FLAGS "--mtriple=riscv32-unknown-none-elf" "--mattr=+m,+c,+a" --fthread-model=local-exec "-c" "-betterC")
 
 if(NOT CMAKE_BUILD_EARLY_EXPANSION)
      set(D_OBJ_PATH "${CMAKE_BINARY_DIR}/d_obj.o")
