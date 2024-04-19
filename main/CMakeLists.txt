@@ -1,6 +1,6 @@
 if(NOT (${IDF_TARGET} STREQUAL "esp32c3"))
      #FIXME:
-     message( FATAL_ERROR "Only esp32c3 target is supported" )
+     message(FATAL_ERROR "Only esp32c3 target is supported")
 endif()
 
 set(D_COMPILER "ldc2")
@@ -22,5 +22,5 @@ endif()
 idf_component_register(SRCS
      "mcu_software.c"
      INCLUDE_DIRS "."
-     REQUIRES "driver"
+     REQUIRES "esp_driver_spi"
 )

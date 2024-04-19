@@ -143,8 +143,16 @@ void configure_displ()
     };
 
     immutable spi_device_interface_config_t devcfg = {
-        clock_speed_hz //FIXME
+        clock_speed_hz: 5 * 1000 * 1000,    //Clock out
+        mode: 0,                            //SPI mode 0
+        spics_io_num: 7,                    //CS pin
+        queue_size: 16,                     //We want to be able to queue 7 transactions at a time
+        //~ pre_cb: spi_pre_transfer_callback,  //Specify pre-transfer callback
     };
+
+    extern(C) void spi_pre_transfer_callback(spi_transaction_t *t)
+    {
+    }
 
     spi_bus_initialize(SPI_HOST, &spi_bus_cfg, spi_dma_chan_t.SPI_DMA_DISABLED);
     spi_bus_add_device(SPI_HOST, &devcfg, &spi);
