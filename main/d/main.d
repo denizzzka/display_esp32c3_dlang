@@ -133,7 +133,7 @@ __gshared spi_device_handle_t spi;
 
 void configure_displ()
 {
-    enum SPI_HOST = spi_host_device_t.SPI_HOST_MAX;
+    enum SPI_HOST = spi_host_device_t.SPI2_HOST;
 
     immutable spi_bus_config_t spi_bus_cfg = {
         mosi_io_num: 3,
@@ -143,10 +143,10 @@ void configure_displ()
     };
 
     immutable spi_device_interface_config_t devcfg = {
-        clock_speed_hz: 5 * 1000 * 1000,    //Clock out
+        clock_speed_hz: 1 * 1000 * 1000,    //Clock out
         mode: 0,                            //SPI mode 0
         spics_io_num: 7,                    //CS pin
-        queue_size: 16,                     //We want to be able to queue 7 transactions at a time
+        queue_size: 1,                      //to avoid assert failed: xQueueGenericCreate queue.c
         //~ pre_cb: spi_pre_transfer_callback,  //Specify pre-transfer callback
     };
 
@@ -194,19 +194,34 @@ struct spi_transaction_t
     };
 }
 
+enum TickType_t portMAX_DELAY = 0xffffffff; // from FreeRTOS
 extern(C) esp_err_t spi_device_queue_trans(spi_device_handle_t handle, spi_transaction_t *trans_desc, TickType_t ticks_to_wait);
+extern(C) esp_err_t spi_device_transmit(spi_device_handle_t handle, spi_transaction_t *trans_desc);
+
+enum SPI_TRANS_USE_TXDATA = (1<<3);  ///< Transmit tx_data member of spi_transaction_t instead of data at tx_buffer. Do not set tx_buffer when using this.
+__gshared spi_transaction_t[2] trans;
 
 extern(C) void app_main()
 {
     configure_led();
     configure_displ();
 
+    // init transactions
+    foreach(ref t; trans)
+    {
+        t.length = 4 + 5*4;
+        t.flags = SPI_TRANS_USE_TXDATA;
+    }
+
+    trans[0].tx_data = [0x55, 0x55, 0x55, 0x55];
+    trans[1].tx_data = [0xaa, 0xaa, 0xaa, 0xaa];
+
     while (1) {
         blink_led();
         s_led_state = !s_led_state;
 
-        // Send random 32-bit value into display
-        //TODO implement
+        // Send value into display
+        spi_device_transmit(spi, (s_led_state ? &trans[0] : &trans[1]));
 
         vTaskDelay(CONFIG_BLINK_PERIOD / portTICK_PERIOD_MS);
     }
