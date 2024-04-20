@@ -256,11 +256,11 @@ extern(C) void app_main()
         s_led_state = !s_led_state;
 
         trans[0].tx_buffer = null;
-        //~ buf.tube_sel(cnt);
-        buf.tube_sel(0);
+        buf.tube_sel(cnt);
+        //~ buf.tube_sel(0);
 
-        import seg_enc : Abc;
-        buf.enable_segment(Abc.A);
+        import seg_enc : latin_abc;
+        buf.enable_segment(latin_abc[cnt_seg]);
 
         cnt++;
         if(cnt > 15)
@@ -268,6 +268,9 @@ extern(C) void app_main()
             cnt = 0;
             cnt_seg++;
         }
+
+        if(cnt_seg > 25)
+            cnt_seg = 0;
 
         // Send value into display
         spi_device_transmit(spi, &trans[0]);
