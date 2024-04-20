@@ -274,6 +274,7 @@ extern(C) esp_err_t spi_device_queue_trans(spi_device_handle_t handle, spi_trans
 extern(C) esp_err_t spi_device_get_trans_result(spi_device_handle_t handle, spi_transaction_t **trans_desc, TickType_t ticks_to_wait);
 extern(C) esp_err_t spi_device_transmit(spi_device_handle_t handle, spi_transaction_t *trans_desc);
 extern(C) esp_err_t spi_device_polling_transmit(spi_device_handle_t handle, spi_transaction_t *trans_desc);
+extern(C) esp_err_t spi_device_acquire_bus(spi_device_handle_t device, TickType_t wait);
 
 enum SPI_TRANS_USE_TXDATA = (1<<3);  ///< Transmit tx_data member of spi_transaction_t instead of data at tx_buffer. Do not set tx_buffer when using this.
 __gshared spi_transaction_t[16] trans;
@@ -329,6 +330,8 @@ extern(C) void app_main()
         import seg_enc : latin_abc;
         buf.enable_segment(latin_abc[i]);
     }
+
+    assert(spi_device_acquire_bus(spi, portMAX_DELAY) == 0, "spi_device_acquire_bus failed");
 
     gptimer_handle_t gptimer;
     gptimer_config_t timer_config = {
