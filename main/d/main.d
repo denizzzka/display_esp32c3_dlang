@@ -225,8 +225,8 @@ void configure_displ()
         queue_size: 16,
 
         //Just for ensure about switching off tubes grids during segments update
-        cs_ena_pretrans: 2,
-        cs_ena_posttrans: 2,
+        cs_ena_pretrans: 1,
+        cs_ena_posttrans: 1,
     };
 
     spi_bus_initialize(SPI_HOST, &spi_bus_cfg, spi_dma_chan_t.SPI_DMA_DISABLED);
