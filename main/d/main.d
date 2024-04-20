@@ -185,7 +185,7 @@ struct spi_transaction_t
     size_t rxlength;
     void *user;
     union {
-        const void *tx_buffer;
+        /*const*/ void *tx_buffer;
         uint8_t[4] tx_data;
     };
     union {
@@ -213,15 +213,64 @@ extern(C) void app_main()
         t.flags = SPI_TRANS_USE_TXDATA;
     }
 
-    trans[0].tx_data = [0x55, 0x55, 0x55, 0x55];
-    trans[1].tx_data = [0xaa, 0xaa, 0xaa, 0xaa];
+    union OutBuf
+    {
+        union
+        {
+            ubyte[4]* buffer;
+            uint* buffer_int;
+        };
+
+        void tube_sel(ubyte tube_num)
+        {
+            assert(tube_num < 16);
+
+            // MSB бит на оригинальной схеме инверсный, поэтому делаю в логике XOR
+            // так, чтобы при увеличении счётчика шёл перебор ламп влево по порядку
+            tube_num ^= 0b_0100;
+
+            //FIXME: don't shift - use SPI_WR_BIT_ORDER
+            *buffer_int = tube_num << 4;
+        }
+
+        void enable_segment(uint seg)
+        {
+            assert((seg & 0xf0) == 0); // 4 bit nibble is used for tube selection and must be zeroed
+
+            *buffer_int = (*buffer_int | seg) ^ 0xffffff0f /* not inverse tube number bits */;
+        }
+
+        struct
+        {
+            ubyte tube_num;
+            ushort seg_val;
+        }
+    }
+
+    OutBuf buf = {buffer: &trans[0].tx_data};
+    ubyte cnt_seg;
+    ubyte cnt;
 
     while (1) {
         blink_led();
         s_led_state = !s_led_state;
 
+        trans[0].tx_buffer = null;
+        //~ buf.tube_sel(cnt);
+        buf.tube_sel(0);
+
+        import seg_enc : Abc;
+        buf.enable_segment(Abc.A);
+
+        cnt++;
+        if(cnt > 15)
+        {
+            cnt = 0;
+            cnt_seg++;
+        }
+
         // Send value into display
-        spi_device_transmit(spi, (s_led_state ? &trans[0] : &trans[1]));
+        spi_device_transmit(spi, &trans[0]);
 
         vTaskDelay(CONFIG_BLINK_PERIOD / portTICK_PERIOD_MS);
     }
