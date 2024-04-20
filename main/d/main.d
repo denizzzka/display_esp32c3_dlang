@@ -82,7 +82,7 @@ struct spi_bus_config_t
     int intr_flags;
 }
 
-private alias transaction_cb_t = void function(void*);
+private alias transaction_cb_t = extern(C) void function(spi_transaction_t* trans);
 
 enum spi_clock_source_t
 {
@@ -131,6 +131,17 @@ struct spi_device_t;
 alias spi_device_handle_t = spi_device_t*;
 __gshared spi_device_handle_t spi;
 
+extern(C) void vTaskDelay(const TickType_t xTicksToDelay);
+extern(C) void ets_delay_us(uint32_t us);
+
+extern(C) void tube_displaying_delay(spi_transaction_t *t)
+{
+    // Время свечения одной лампы
+    //~ vTaskDelay(50 * portTICK_PERIOD_MS);
+    //~ vTaskDelay(1);
+    ets_delay_us(500);
+}
+
 void configure_displ()
 {
     enum SPI_HOST = spi_host_device_t.SPI2_HOST;
@@ -143,16 +154,17 @@ void configure_displ()
     };
 
     immutable spi_device_interface_config_t devcfg = {
-        clock_speed_hz: 1 * 1000 * 1000,    //Clock out
+        clock_speed_hz: 10 * 1000 * 1000,    //Clock out
         mode: 0,                            //SPI mode 0
         spics_io_num: 7,                    //CS pin
-        queue_size: 1,                      //to avoid assert failed: xQueueGenericCreate queue.c
-        //~ pre_cb: spi_pre_transfer_callback,  //Specify pre-transfer callback
-    };
+        queue_size: 16,
 
-    extern(C) void spi_pre_transfer_callback(spi_transaction_t *t)
-    {
-    }
+        //Just for ensure about switching off tubes grids during segments update
+        cs_ena_pretrans: 2,
+        cs_ena_posttrans: 2,
+
+        post_cb: &tube_displaying_delay,
+    };
 
     spi_bus_initialize(SPI_HOST, &spi_bus_cfg, spi_dma_chan_t.SPI_DMA_DISABLED);
     spi_bus_add_device(SPI_HOST, &devcfg, &spi);
@@ -196,22 +208,16 @@ struct spi_transaction_t
 
 enum TickType_t portMAX_DELAY = 0xffffffff; // from FreeRTOS
 extern(C) esp_err_t spi_device_queue_trans(spi_device_handle_t handle, spi_transaction_t *trans_desc, TickType_t ticks_to_wait);
+extern(C) esp_err_t spi_device_get_trans_result(spi_device_handle_t handle, spi_transaction_t **trans_desc, TickType_t ticks_to_wait);
 extern(C) esp_err_t spi_device_transmit(spi_device_handle_t handle, spi_transaction_t *trans_desc);
 
 enum SPI_TRANS_USE_TXDATA = (1<<3);  ///< Transmit tx_data member of spi_transaction_t instead of data at tx_buffer. Do not set tx_buffer when using this.
-__gshared spi_transaction_t[2] trans;
+__gshared spi_transaction_t[16] trans;
 
 extern(C) void app_main()
 {
     configure_led();
     configure_displ();
-
-    // init transactions
-    foreach(ref t; trans)
-    {
-        t.length = 4 + 5*4;
-        t.flags = SPI_TRANS_USE_TXDATA;
-    }
 
     union OutBuf
     {
@@ -247,34 +253,38 @@ extern(C) void app_main()
         }
     }
 
-    OutBuf buf = {buffer: &trans[0].tx_data};
-    ubyte cnt_seg;
-    ubyte cnt;
+    // init transactions
+    foreach(ubyte i, ref t; trans)
+    {
+        t.length = 4 + 5*4;
+        t.flags = SPI_TRANS_USE_TXDATA;
+
+        OutBuf buf = {buffer: &t.tx_data};
+        buf.tube_sel(i);
+        //~ buf.tube_sel(3);
+
+        import seg_enc : latin_abc;
+        buf.enable_segment(latin_abc[i]);
+    }
 
     while (1) {
         blink_led();
         s_led_state = !s_led_state;
 
-        trans[0].tx_buffer = null;
-        buf.tube_sel(cnt);
-        //~ buf.tube_sel(0);
+        // Send value into display
+        foreach(ref t; trans)
+            spi_device_queue_trans(spi, &t, portMAX_DELAY);
 
-        import seg_enc : latin_abc;
-        buf.enable_segment(latin_abc[cnt_seg]);
-
-        cnt++;
-        if(cnt > 15)
+        foreach(ref t; trans)
         {
-            cnt = 0;
-            cnt_seg++;
+            auto p = &t;
+            spi_device_get_trans_result(spi, &p, portMAX_DELAY);
         }
 
-        if(cnt_seg > 25)
-            cnt_seg = 0;
-
-        // Send value into display
-        spi_device_transmit(spi, &trans[0]);
-
-        vTaskDelay(CONFIG_BLINK_PERIOD / portTICK_PERIOD_MS);
+        //~ vTaskDelay(CONFIG_BLINK_PERIOD / portTICK_PERIOD_MS);
+        vTaskDelay(0);
+        //~ vPortYield();
     }
 }
+
+extern(C) void vPortYield();
