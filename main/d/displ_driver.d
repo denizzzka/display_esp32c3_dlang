@@ -11,8 +11,20 @@ extern(C) esp_err_t spi_device_acquire_bus(spi_device_handle_t device, TickType_
 
 enum SPI_TRANS_USE_TXDATA = (1<<3);  ///< Transmit tx_data member of spi_transaction_t instead of data at tx_buffer. Do not set tx_buffer when using this.
 
-alias DisplBuff = spi_transaction_t[16];
-__gshared DisplBuff[2] displ_buffs;
+private alias DisplBuff = spi_transaction_t[16];
+
+struct DisplayData
+{
+    private __gshared DisplBuff[2] displ_buffs;
+    private bool needSwapBuff; // TODO: must be atomic for multithreaded platforms
+
+    void updateDisplayedData()
+    {
+        needSwapBuff = true;
+    }
+}
+
+__gshared DisplayData display_data;
 
 struct spi_bus_config_t
 {
@@ -215,7 +227,7 @@ void configure_displ()
     {
         ubyte abc_letter_num;
 
-        foreach(ref trans; displ_buffs)
+        foreach(ref trans; display_data.displ_buffs)
             foreach(ubyte tube_num, ref t; trans)
             {
                 t.length = 4 + 5*4;
@@ -293,18 +305,11 @@ union OutBuf
     }
 }
 
-private __gshared bool needSwitchBuff; // TODO: must be atomic for multithreaded platforms
-
-void switch_buf()
-{
-    needSwitchBuff = true;
-}
-
 extern(C) ubyte display_one_symbol(gptimer_handle_t timer, const gptimer_alarm_event_data_t *edata, void *user_ctx)
 {
     __gshared static ubyte tube_cnt;
-    __gshared static DisplBuff* curr = &displ_buffs[0];
-    __gshared static DisplBuff* shadow = &displ_buffs[1];
+    __gshared static DisplBuff* curr = &display_data.displ_buffs[0];
+    __gshared static DisplBuff* shadow = &display_data.displ_buffs[1];
 
     spi_device_polling_transmit(spi, &(*curr)[tube_cnt]);
 
@@ -313,13 +318,13 @@ extern(C) ubyte display_one_symbol(gptimer_handle_t timer, const gptimer_alarm_e
     {
         tube_cnt = 0;
 
-        if(needSwitchBuff)
+        if(display_data.needSwapBuff)
         {
             auto tmp = curr;
             curr = shadow;
             shadow = tmp;
 
-            needSwitchBuff = false;
+            display_data.needSwapBuff = false;
         }
     }
 
