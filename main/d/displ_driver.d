@@ -32,6 +32,15 @@ struct DisplayData
         OutBuf buf = OutBuf((*shadow)[idx]);
         buf.enable_segment(utf2seg(c));
     }
+
+    void cleanLine()
+    {
+        foreach(ref c; *shadow)
+        {
+            auto buf = OutBuf(c);
+            buf.enable_segment(0);
+        }
+    }
 }
 
 __gshared DisplayData display_data;

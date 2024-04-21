@@ -81,6 +81,7 @@ extern(C) void app_main()
         blink_led();
         s_led_state = !s_led_state;
 
+        display_data.cleanLine();
         display_data.putChar(cnt, 'A');
         display_data.updateDisplayedData();
         cnt++;
