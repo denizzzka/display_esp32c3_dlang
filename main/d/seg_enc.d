@@ -41,7 +41,7 @@ enum a = a1|a2;
 enum d = d1|d2;
 enum g = g1|g2;
 
-immutable uint[] latin_abc =
+immutable uint[] latin =
 [
     k|j|g2|b|c,         //A
     a|d|i|l|b|c|g2,     //B
@@ -70,3 +70,26 @@ immutable uint[] latin_abc =
     h|j|l,              //Y
     a|d|k|j,            //Z
 ];
+
+uint utf2seg(in wchar c) pure
+{
+    uint ret;
+
+    if(c == 0x0020) // space;
+    {
+    }
+    //~ else if(c >= 0x0030 && c <= 0x0039)
+        //~ ret = numbers[c - 0x0030];
+    else if(c >= 0x0041 && c <= 0x005a)
+        ret = latin[c - 0x0041];
+    else if(c >= 0x0061 && c <= 0x007a) //TODO: implement lowercase chars table
+        ret = latin[c - 0x0061];
+    //~ else if(c >= 0x0410 && c <= 0x422f)
+        //~ ret = cyrillic[c - 0x0410];
+    //~ else if(c == 0x0401) // Cyrillic "Ё" spicial case
+        //~ ret = cyrillic[5]; // "Е"
+    //~ else
+        //~ ret = 0b01111111_00101010; // unknown symbol marking (cross in square)
+
+    return ret;
+}

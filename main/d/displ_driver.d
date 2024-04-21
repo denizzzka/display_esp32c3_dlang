@@ -226,6 +226,7 @@ void configure_displ()
     // init transactions buffers
     {
         ubyte abc_letter_num;
+        immutable wchar[] str = "This is a test  Это проверка";
 
         foreach(ref trans; display_data.displ_buffs)
             foreach(ubyte tube_num, ref t; trans)
@@ -236,12 +237,12 @@ void configure_displ()
                 OutBuf buf = {buffer: &t.tx_data};
                 buf.tube_sel(tube_num);
 
-                import seg_enc : latin_abc;
-                buf.enable_segment(latin_abc[abc_letter_num]);
+                import seg_enc;
+                buf.enable_segment(str[abc_letter_num].utf2seg);
 
                 abc_letter_num++;
 
-                if(abc_letter_num >= latin_abc.length)
+                if(abc_letter_num >= str.length)
                     abc_letter_num=0;
             }
     }
