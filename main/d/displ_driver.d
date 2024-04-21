@@ -293,19 +293,35 @@ union OutBuf
     }
 }
 
+private __gshared bool needSwitchBuff; // TODO: must be atomic for multithreaded platforms
+
+void switch_buf()
+{
+    needSwitchBuff = true;
+}
+
 extern(C) ubyte display_one_symbol(gptimer_handle_t timer, const gptimer_alarm_event_data_t *edata, void *user_ctx)
 {
     __gshared static ubyte tube_cnt;
+    __gshared static DisplBuff* curr = &displ_buffs[0];
+    __gshared static DisplBuff* shadow = &displ_buffs[1];
 
-    // Send value into display
-    //~ spi_device_transmit(spi, &trans[tube_cnt]);
-    spi_device_polling_transmit(spi, &displ_buffs[0][tube_cnt]);
-
-    //~ assert(false);
+    spi_device_polling_transmit(spi, &(*curr)[tube_cnt]);
 
     tube_cnt++;
     if(tube_cnt >= DisplBuff.length)
+    {
         tube_cnt = 0;
+
+        if(needSwitchBuff)
+        {
+            auto tmp = curr;
+            curr = shadow;
+            shadow = tmp;
+
+            needSwitchBuff = false;
+        }
+    }
 
     return 0;
 }

@@ -70,7 +70,7 @@ extern(C) int rand();
 
 extern(C) void app_main()
 {
-    import displ_driver: configure_displ;
+    import displ_driver;
 
     configure_led();
     configure_displ();
@@ -78,6 +78,8 @@ extern(C) void app_main()
     while (1) {
         blink_led();
         s_led_state = !s_led_state;
+
+        switch_buf();
 
         vTaskDelay(CONFIG_BLINK_PERIOD / portTICK_PERIOD_MS);
     }
