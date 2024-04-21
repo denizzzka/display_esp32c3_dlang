@@ -16,6 +16,8 @@ private alias DisplBuff = spi_transaction_t[16];
 struct DisplayData
 {
     private __gshared DisplBuff[2] displ_buffs;
+    private __gshared DisplBuff* curr = &display_data.displ_buffs[0];
+    private __gshared DisplBuff* shadow = &display_data.displ_buffs[1];
     private bool needSwapBuff; // TODO: must be atomic for multithreaded platforms
 
     void updateDisplayedData()
@@ -308,10 +310,8 @@ private struct OutBuf
 extern(C) ubyte display_one_symbol(gptimer_handle_t timer, const gptimer_alarm_event_data_t *edata, void *user_ctx)
 {
     __gshared static ubyte tube_cnt;
-    __gshared static DisplBuff* curr = &display_data.displ_buffs[0];
-    __gshared static DisplBuff* shadow = &display_data.displ_buffs[1];
 
-    spi_device_polling_transmit(spi, &(*curr)[tube_cnt]);
+    spi_device_polling_transmit(spi, &(*display_data.curr)[tube_cnt]);
 
     tube_cnt++;
     if(tube_cnt >= DisplBuff.length)
@@ -320,9 +320,9 @@ extern(C) ubyte display_one_symbol(gptimer_handle_t timer, const gptimer_alarm_e
 
         if(display_data.needSwapBuff)
         {
-            auto tmp = curr;
-            curr = shadow;
-            shadow = tmp;
+            auto tmp = display_data.curr;
+            display_data.curr = display_data.shadow;
+            display_data.shadow = tmp;
 
             display_data.needSwapBuff = false;
         }
