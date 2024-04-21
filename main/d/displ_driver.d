@@ -14,8 +14,6 @@ enum SPI_TRANS_USE_TXDATA = (1<<3);  ///< Transmit tx_data member of spi_transac
 alias DisplBuff = spi_transaction_t[16];
 __gshared DisplBuff[2] displ_buffs;
 
-auto trans = &displ_buffs[0];
-
 struct spi_bus_config_t
 {
     union {
@@ -214,7 +212,8 @@ void configure_displ()
     spi_bus_add_device(SPI_HOST, &devcfg, &spi);
 
     // init transactions
-    foreach(ubyte i, ref t; *trans)
+    foreach(ref trans; displ_buffs)
+    foreach(ubyte i, ref t; trans)
     {
         t.length = 4 + 5*4;
         t.flags = SPI_TRANS_USE_TXDATA;
@@ -291,12 +290,12 @@ extern(C) ubyte display_one_symbol(gptimer_handle_t timer, const gptimer_alarm_e
 
     // Send value into display
     //~ spi_device_transmit(spi, &trans[tube_cnt]);
-    spi_device_polling_transmit(spi, &(*trans)[tube_cnt]);
+    spi_device_polling_transmit(spi, &displ_buffs[0][tube_cnt]);
 
     //~ assert(false);
 
     tube_cnt++;
-    if(tube_cnt >= trans.length)
+    if(tube_cnt >= DisplBuff.length)
         tube_cnt = 0;
 
     return 0;
