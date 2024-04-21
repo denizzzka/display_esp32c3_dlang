@@ -37,7 +37,7 @@ extern(C) void vTaskDelay(const TickType_t xTicksToDelay);
 
 //~ #include "sdkconfig.h"
 
-enum CONFIG_BLINK_PERIOD = 50;
+enum CONFIG_BLINK_PERIOD = 25;
 enum BLINK_GPIO = 12;
 
 enum esp_intr_cpu_affinity_t
@@ -75,16 +75,23 @@ extern(C) void app_main()
     configure_led();
     configure_displ();
 
+    immutable wstring str =
+        "                "~
+        "This is a test, please wait"~
+        "                ";
+
     ubyte cnt;
 
     while (1) {
         blink_led();
         s_led_state = !s_led_state;
 
-        display_data.cleanLine();
-        display_data.putChar(cnt, 'A');
+        display_data.putLine(str[cnt .. cnt + 16]);
         display_data.updateDisplayedData();
+
         cnt++;
+        if(cnt >= str.length - 16)
+            cnt = 0;
 
         vTaskDelay(CONFIG_BLINK_PERIOD / portTICK_PERIOD_MS);
     }

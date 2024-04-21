@@ -41,6 +41,13 @@ struct DisplayData
             buf.enable_segment(0);
         }
     }
+
+    void putLine(T)(in T str)
+    if(is(T == wchar[16]) || is(T == wstring))
+    {
+        foreach(i; 0 .. (str.length > 16 ? 16 : str.length))
+            putChar(15 - i, str[i]);
+    }
 }
 
 __gshared DisplayData display_data;
@@ -244,25 +251,14 @@ void configure_displ()
 
     // init transactions buffers
     {
-        ubyte abc_letter_num;
-        immutable wchar[] str = "This is a test  Это проверка";
-
         foreach(ref trans; display_data.displ_buffs)
-            foreach_reverse(ubyte tube_num, ref t; trans)
+            foreach(ubyte tube_num, ref t; trans)
             {
                 t.length = 4 + 5*4;
                 t.flags = SPI_TRANS_USE_TXDATA;
 
                 OutBuf buf = OutBuf(t);
                 buf.tube_sel(tube_num);
-
-                import seg_enc;
-                buf.enable_segment(str[abc_letter_num].utf2seg);
-
-                abc_letter_num++;
-
-                if(abc_letter_num >= str.length)
-                    abc_letter_num=0;
             }
     }
 
