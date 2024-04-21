@@ -24,6 +24,14 @@ struct DisplayData
     {
         needSwapBuff = true;
     }
+
+    void putChar(size_t idx, wchar c)
+    {
+        import seg_enc: utf2seg;
+
+        OutBuf buf = OutBuf((*shadow)[idx]);
+        buf.enable_segment(utf2seg(c));
+    }
 }
 
 __gshared DisplayData display_data;
@@ -303,7 +311,7 @@ private struct OutBuf
     {
         assert((seg & 0xf0) == 0); // 4 bit nibble is used for tube selection and must be zeroed
 
-        *buffer_int = (*buffer_int | seg) ^ 0xffffff0f /* not inverse tube number bits */;
+        *buffer_int = (*buffer_int & 0xf0) /* preserve tube number */ | (seg ^ 0xffffff0f); /* not inverse tube number bits */
     }
 }
 

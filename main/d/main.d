@@ -75,11 +75,15 @@ extern(C) void app_main()
     configure_led();
     configure_displ();
 
+    ubyte cnt;
+
     while (1) {
         blink_led();
         s_led_state = !s_led_state;
 
+        display_data.putChar(cnt, 'A');
         display_data.updateDisplayedData();
+        cnt++;
 
         vTaskDelay(CONFIG_BLINK_PERIOD / portTICK_PERIOD_MS);
     }
