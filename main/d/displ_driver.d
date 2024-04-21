@@ -211,18 +211,27 @@ void configure_displ()
     spi_bus_initialize(SPI_HOST, &spi_bus_cfg, spi_dma_chan_t.SPI_DMA_DISABLED);
     spi_bus_add_device(SPI_HOST, &devcfg, &spi);
 
-    // init transactions
-    foreach(ref trans; displ_buffs)
-    foreach(ubyte i, ref t; trans)
+    // init transactions buffers
     {
-        t.length = 4 + 5*4;
-        t.flags = SPI_TRANS_USE_TXDATA;
+        ubyte abc_letter_num;
 
-        OutBuf buf = {buffer: &t.tx_data};
-        buf.tube_sel(i);
+        foreach(ref trans; displ_buffs)
+            foreach(ubyte tube_num, ref t; trans)
+            {
+                t.length = 4 + 5*4;
+                t.flags = SPI_TRANS_USE_TXDATA;
 
-        import seg_enc : latin_abc;
-        buf.enable_segment(latin_abc[i]);
+                OutBuf buf = {buffer: &t.tx_data};
+                buf.tube_sel(tube_num);
+
+                import seg_enc : latin_abc;
+                buf.enable_segment(latin_abc[abc_letter_num]);
+
+                abc_letter_num++;
+
+                if(abc_letter_num >= latin_abc.length)
+                    abc_letter_num=0;
+            }
     }
 
     assert(spi_device_acquire_bus(spi, portMAX_DELAY) == 0, "spi_device_acquire_bus failed");
