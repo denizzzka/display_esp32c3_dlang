@@ -229,12 +229,12 @@ void configure_displ()
         immutable wchar[] str = "This is a test  Это проверка";
 
         foreach(ref trans; display_data.displ_buffs)
-            foreach(ubyte tube_num, ref t; trans)
+            foreach_reverse(ubyte tube_num, ref t; trans)
             {
                 t.length = 4 + 5*4;
                 t.flags = SPI_TRANS_USE_TXDATA;
 
-                OutBuf buf = {buffer: &t.tx_data};
+                OutBuf buf = OutBuf(t);
                 buf.tube_sel(tube_num);
 
                 import seg_enc;
@@ -272,13 +272,18 @@ void configure_displ()
     assert(gptimer_start(gptimer) == 0, "gptimer_start failed");
 }
 
-union OutBuf
+private struct OutBuf
 {
     union
     {
         ubyte[4]* buffer;
         uint* buffer_int;
     };
+
+    this(ref spi_transaction_t t)
+    {
+        buffer = &t.tx_data;
+    }
 
     void tube_sel(ubyte tube_num)
     {
@@ -297,12 +302,6 @@ union OutBuf
         assert((seg & 0xf0) == 0); // 4 bit nibble is used for tube selection and must be zeroed
 
         *buffer_int = (*buffer_int | seg) ^ 0xffffff0f /* not inverse tube number bits */;
-    }
-
-    struct
-    {
-        ubyte tube_num;
-        ushort seg_val;
     }
 }
 
