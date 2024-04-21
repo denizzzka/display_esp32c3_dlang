@@ -10,7 +10,11 @@ extern(C) esp_err_t spi_device_polling_transmit(spi_device_handle_t handle, spi_
 extern(C) esp_err_t spi_device_acquire_bus(spi_device_handle_t device, TickType_t wait);
 
 enum SPI_TRANS_USE_TXDATA = (1<<3);  ///< Transmit tx_data member of spi_transaction_t instead of data at tx_buffer. Do not set tx_buffer when using this.
-__gshared spi_transaction_t[16] trans;
+
+alias DisplBuff = spi_transaction_t[16];
+__gshared DisplBuff[2] displ_buffs;
+
+auto trans = &displ_buffs[0];
 
 struct spi_bus_config_t
 {
@@ -210,7 +214,7 @@ void configure_displ()
     spi_bus_add_device(SPI_HOST, &devcfg, &spi);
 
     // init transactions
-    foreach(ubyte i, ref t; trans)
+    foreach(ubyte i, ref t; *trans)
     {
         t.length = 4 + 5*4;
         t.flags = SPI_TRANS_USE_TXDATA;
@@ -287,7 +291,7 @@ extern(C) ubyte display_one_symbol(gptimer_handle_t timer, const gptimer_alarm_e
 
     // Send value into display
     //~ spi_device_transmit(spi, &trans[tube_cnt]);
-    spi_device_polling_transmit(spi, &trans[tube_cnt]);
+    spi_device_polling_transmit(spi, &(*trans)[tube_cnt]);
 
     //~ assert(false);
 
