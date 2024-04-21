@@ -18,6 +18,7 @@ add_custom_command(
      OUTPUT ${D_OBJ_PATH}
      COMMAND ${D_COMPILER} ${D_COMPILER_FLAGS} "-of=${D_OBJ_PATH}"
      "${CMAKE_SOURCE_DIR}/main/d/seg_enc.d"
+     "${CMAKE_SOURCE_DIR}/main/d/displ_driver.d"
      "${CMAKE_SOURCE_DIR}/main/d/main.d"
 )
 add_library(d_obj STATIC ${D_OBJ_PATH})
