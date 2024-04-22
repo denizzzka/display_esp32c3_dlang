@@ -41,6 +41,20 @@ enum a = a1|a2;
 enum d = d1|d2;
 enum g = g1|g2;
 
+immutable uint[] numbers =
+[
+    a|d|f|e|b|c|j|k,    //0
+    a1|i|l|d,           //1
+    a|b|g|e|d,          //2
+    a|j|g2|c|d,         //3
+    f|g|b|c,            //4
+    a|f|g|c|d,          //5
+    a|f|g|c|d|e,        //6
+    a|j|l,              //7
+    a|d|f|e|b|c|g,      //8
+    a|d|f|b|c|g,        //9
+];
+
 immutable uint[] latin =
 [
     k|j|g2|b|c,         //A
@@ -71,6 +85,10 @@ immutable uint[] latin =
     a|d|k|j,            //Z
 ];
 
+immutable uint[] cyrillic =
+[
+];
+
 uint utf2seg(in wchar c) pure
 {
     uint ret;
@@ -78,8 +96,8 @@ uint utf2seg(in wchar c) pure
     if(c == 0x0020) // space;
     {
     }
-    //~ else if(c >= 0x0030 && c <= 0x0039)
-        //~ ret = numbers[c - 0x0030];
+    else if(c >= 0x0030 && c <= 0x0039)
+        ret = numbers[c - 0x0030];
     else if(c >= 0x0041 && c <= 0x005a)
         ret = latin[c - 0x0041];
     else if(c >= 0x0061 && c <= 0x007a) //TODO: implement lowercase chars table
