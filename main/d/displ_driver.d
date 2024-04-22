@@ -25,21 +25,22 @@ struct DisplayData
         needSwapBuff = true;
     }
 
+    private ref spi_transaction_t getTubeByIdx(T)(T idx)
+    {
+        return (*shadow)[idx];
+    }
+
     void putChar(size_t idx, wchar c)
     {
         import seg_enc: utf2seg;
 
-        OutBuf buf = OutBuf((*shadow)[idx]);
-        buf.enable_segment(utf2seg(c));
+        getTubeByIdx(idx).setTubeSegments(idx, c.utf2seg);
     }
 
     void cleanLine()
     {
-        foreach(ref c; *shadow)
-        {
-            auto buf = OutBuf(c);
-            buf.enable_segment(0);
-        }
+        foreach(i; 0 .. (*shadow).length)
+            putChar(i, ' ');
     }
 
     void putLine(T)(in T str)
@@ -257,8 +258,7 @@ void configure_displ()
                 t.length = 4 + 5*4;
                 t.flags = SPI_TRANS_USE_TXDATA;
 
-                OutBuf buf = OutBuf(t);
-                buf.tube_sel(tube_num);
+                t.setTubeSegments(tube_num, 0xffffff0f);
             }
     }
 
@@ -287,37 +287,22 @@ void configure_displ()
     assert(gptimer_start(gptimer) == 0, "gptimer_start failed");
 }
 
-private struct OutBuf
+private void setTubeSegments(T)(ref spi_transaction_t t, T tube_num, in uint seg)
 {
-    union
-    {
-        ubyte[4]* buffer;
-        uint* buffer_int;
-    };
+    auto buffer_int = &t.tx_data;
 
-    this(ref spi_transaction_t t)
-    {
-        buffer = &t.tx_data;
-    }
+    assert(tube_num < 16);
 
-    void tube_sel(ubyte tube_num)
-    {
-        assert(tube_num < 16);
+    // MSB бит на оригинальной схеме инверсный, поэтому делаю в логике XOR
+    // так, чтобы при увеличении счётчика шёл перебор ламп влево по порядку
+    tube_num ^= 0b_0100;
 
-        // MSB бит на оригинальной схеме инверсный, поэтому делаю в логике XOR
-        // так, чтобы при увеличении счётчика шёл перебор ламп влево по порядку
-        tube_num ^= 0b_0100;
+    //FIXME: don't shift - use SPI_WR_BIT_ORDER
+    auto tube_encoded = tube_num << 4;
 
-        //FIXME: don't shift - use SPI_WR_BIT_ORDER
-        *buffer_int = tube_num << 4;
-    }
+    assert((seg & 0xf0) == 0); // 4 bit nibble is used for tube selection and must be zeroed
 
-    void enable_segment(uint seg)
-    {
-        assert((seg & 0xf0) == 0); // 4 bit nibble is used for tube selection and must be zeroed
-
-        *buffer_int = (*buffer_int & 0xf0) /* preserve tube number */ | (seg ^ 0xffffff0f); /* not inverse tube number bits */
-    }
+    t.tx_buffer = cast(void*)(tube_encoded | (seg ^ 0xffffff0f)); /* not inverse tube number bits */
 }
 
 extern(C) ubyte display_one_symbol(gptimer_handle_t timer, const gptimer_alarm_event_data_t *edata, void *user_ctx)
