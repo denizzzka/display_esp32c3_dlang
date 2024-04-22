@@ -97,8 +97,6 @@ extern(C) void app_main()
     }
 }
 
-//~ extern(C) void esp_error_check_failed_print(const char *msg, esp_err_t rc, const char *file, uint line, const char* fn, const char *expression, ptrdiff_t* addr);
-
 //~ void ESP_ERROR_CHECK(esp_err_t rc, string file = __FILE__, size_t line = __LINE__)
 //~ {
     //~ if(rc != 0)
