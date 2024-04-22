@@ -10,7 +10,7 @@ idf_component_register(SRCS
 )
 
 set(D_COMPILER "ldc2")
-set(D_COMPILER_FLAGS "--mtriple=riscv32-unknown-newlib-elf" "--mattr=+m,+c,+a" --fthread-model=local-exec "-c" "-betterC" --boundscheck=off)
+set(D_COMPILER_FLAGS "--mtriple=riscv32-unknown-newlib-elf" "--mattr=+m,+c,+a" --fthread-model=local-exec "-c" "-betterC")
 
 set(D_OBJ_PATH "${CMAKE_BINARY_DIR}/d_obj.o")
 
