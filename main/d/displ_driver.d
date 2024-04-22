@@ -49,7 +49,7 @@ struct DisplayData
     if(is(T == wchar[16]) || is(T == wstring))
     {
         foreach(i; 0 .. (str.length > 16 ? 16 : str.length))
-            putChar(15 - i, str[i], (i == 3 ? true : false));
+            putChar(15 - i, str[i]);
     }
 }
 

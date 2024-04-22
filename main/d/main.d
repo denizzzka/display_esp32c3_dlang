@@ -37,7 +37,7 @@ extern(C) void vTaskDelay(const TickType_t xTicksToDelay);
 
 //~ #include "sdkconfig.h"
 
-enum CONFIG_BLINK_PERIOD = 25;
+enum CONFIG_BLINK_PERIOD = 10;
 enum BLINK_GPIO = 12;
 
 enum esp_intr_cpu_affinity_t
@@ -75,27 +75,28 @@ extern(C) void app_main()
     configure_led();
     configure_displ();
 
-    display_data.putLine(cast(wchar[16]) "1234567890abcdefasdfgzxcvbx");
-    display_data.updateDisplayedData();
-
-    immutable wstring str =
-        "                "~
-        "This is a test, please wait"~
-        "                ";
-
-    ubyte cnt;
-
     while (1) {
         blink_led();
         s_led_state = !s_led_state;
 
-        //~ display_data.putLine(str[cnt .. cnt + 16]);
-        //~ display_data.putLine(cast(wchar[16]) "abcdefasdfgzxcvbx");
-        //~ display_data.updateDisplayedData();
+        static import effects;
 
-        cnt++;
-        if(cnt >= str.length - 16)
-            cnt = 0;
+        if(!effects.waitBetweenLines)
+        {
+            display_data.cleanLine();
+
+            size_t pos;
+            auto curr_state = effects.getCurrState(pos);
+
+            display_data.putLine(curr_state);
+
+            if(pos < 15)
+                display_data.putChar(15 - pos - 1, '_', true);
+
+            display_data.updateDisplayedData();
+        }
+
+        effects.step();
 
         vTaskDelay(CONFIG_BLINK_PERIOD / portTICK_PERIOD_MS);
     }
