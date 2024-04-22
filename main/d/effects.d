@@ -25,6 +25,10 @@ private size_t curr_line;
 
 void step()
 {
+    // stop?
+    if(curr_line >= text_for_typing.length - 1)
+        return;
+
     if(waitBetweenLines > 0)
         waitBetweenLines--;
     else
@@ -37,6 +41,7 @@ void step()
 
         if(text_for_typing[curr_line] is null)
         {
+            // pause
             curr_line++;
             waitBetweenLines = 30;
         }

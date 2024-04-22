@@ -37,7 +37,7 @@ extern(C) void vTaskDelay(const TickType_t xTicksToDelay);
 
 //~ #include "sdkconfig.h"
 
-enum CONFIG_BLINK_PERIOD = 10;
+enum CONFIG_BLINK_PERIOD = 8;
 enum BLINK_GPIO = 12;
 
 enum esp_intr_cpu_affinity_t
