@@ -46,13 +46,13 @@ immutable uint[] numbers =
     a|d|f|e|b|c|j|k,    //0
     a1|i|l|d,           //1
     a|b|g|e|d,          //2
-    a|j|g2|c|d,         //3
+    a|b|g|c|d,          //3
     f|g|b|c,            //4
     a|f|g|c|d,          //5
-    a1|f|g|c|d|e,       //6
+    a|f|g|c|d|e,        //6
     a|j|l,              //7
     a|d|f|e|b|c|g,      //8
-    a|d2|f|b|c|g,       //9
+    a|d|f|b|c|g,        //9
 ];
 
 immutable uint[] latin =
@@ -87,6 +87,38 @@ immutable uint[] latin =
 
 immutable uint[] cyrillic =
 [
+    k|j|g2|b|c,         //А
+    a|f|e|d|g1|m,       //Б
+    a|d|f|e|j|c|g,      //В
+    a|f|e,              //Г
+    a|d|f|e|b|c|dpl|dpr,//Д
+    a|f|e|d|g1,         //Е
+    h|m|i|l|j|k,        //Ж
+    a|j|g2|c|d,         //З
+    f|e|k|j|b|c,        //И
+    f|e|k|j|b|c|i,      //Й
+    f|e|g1|j|m,         //К
+    k|j|b|c,            //Л
+    f|e|b|c|h|j,        //М
+    f|e|g|b|c,          //Н
+    f|e|b|c|a|d,        //О
+    f|e|a|b|c,          //П
+    a|f|e|g|b,          //Р
+    a|d|f|e,            //С
+    a|i|l,              //Т
+    f|d|g|b|c,          //У
+    a|f|i|b|g|l,        //Ф
+    h|m|k|j,            //Х
+    f|e|d|b|c|dpr,      //Ц
+    h|g2|b|c,           //Ч
+    f|e|i|l|b|c|d,      //Ш
+    f|e|i|l|b|c|d|dpr,  //Щ
+    a1|i|l|g2|c|d2,     //Ъ
+    f|e|d1|l|g1|b|c,    //Ы
+    f|g1|m|d|e,         //Ь
+    a|b|g2|c|d,         //Э
+    f|e|g1|i|l|a2|d2|b|c,   //Ю
+    a|f|b|c|g|k,        //Я
 ];
 
 uint utf2seg(in wchar c) pure
@@ -102,10 +134,10 @@ uint utf2seg(in wchar c) pure
         ret = latin[c - 0x0041];
     else if(c >= 0x0061 && c <= 0x007a) //TODO: implement lowercase chars table
         ret = latin[c - 0x0061];
-    //~ else if(c >= 0x0410 && c <= 0x422f)
-        //~ ret = cyrillic[c - 0x0410];
-    //~ else if(c == 0x0401) // Cyrillic "Ё" spicial case
-        //~ ret = cyrillic[5]; // "Е"
+    else if(c >= 0x0410 && c <= 0x422f)
+        ret = cyrillic[c - 0x0410];
+    else if(c == 0x0401) // Cyrillic "Ё" spicial case
+        ret = cyrillic[5]; // "Е"
     //~ else
         //~ ret = 0b01111111_00101010; // unknown symbol marking (cross in square)
 
