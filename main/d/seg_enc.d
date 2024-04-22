@@ -49,10 +49,10 @@ immutable uint[] numbers =
     a|j|g2|c|d,         //3
     f|g|b|c,            //4
     a|f|g|c|d,          //5
-    a|f|g|c|d|e,        //6
+    a1|f|g|c|d|e,       //6
     a|j|l,              //7
     a|d|f|e|b|c|g,      //8
-    a|d|f|b|c|g,        //9
+    a|d2|f|b|c|g,       //9
 ];
 
 immutable uint[] latin =

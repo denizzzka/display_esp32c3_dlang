@@ -75,7 +75,7 @@ extern(C) void app_main()
     configure_led();
     configure_displ();
 
-    display_data.putLine(cast(wchar[16]) "abcdefasdfgzxcvbx");
+    display_data.putLine(cast(wchar[16]) "1234567890abcdefasdfgzxcvbx");
     display_data.updateDisplayedData();
 
     immutable wstring str =
