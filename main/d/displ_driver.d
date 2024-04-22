@@ -19,6 +19,7 @@ struct DisplayData
     private __gshared DisplBuff* curr = &display_data.displ_buffs[0];
     private __gshared DisplBuff* shadow = &display_data.displ_buffs[1];
     private bool needSwapBuff; // TODO: must be atomic for multithreaded platforms
+    private bool[DisplBuff.length] blinkFlag;
 
     void updateDisplayedData()
     {
@@ -30,11 +31,12 @@ struct DisplayData
         return (*shadow)[idx];
     }
 
-    void putChar(size_t idx, wchar c)
+    void putChar(size_t idx, wchar c, bool blinking = false)
     {
         import seg_enc: utf2seg;
 
         getTubeByIdx(idx).setTubeSegments(idx, c.utf2seg);
+        blinkFlag[idx] = blinking;
     }
 
     void cleanLine()
@@ -47,7 +49,7 @@ struct DisplayData
     if(is(T == wchar[16]) || is(T == wstring))
     {
         foreach(i; 0 .. (str.length > 16 ? 16 : str.length))
-            putChar(15 - i, str[i]);
+            putChar(15 - i, str[i], (i == 3 ? true : false));
     }
 }
 
@@ -258,7 +260,7 @@ void configure_displ()
                 t.length = 4 + 5*4;
                 t.flags = SPI_TRANS_USE_TXDATA;
 
-                t.setTubeSegments(tube_num, 0xffffff0f);
+                t.setTubeSegments(tube_num, 0);
             }
     }
 
@@ -309,7 +311,20 @@ extern(C) ubyte display_one_symbol(gptimer_handle_t timer, const gptimer_alarm_e
 {
     __gshared static ubyte tube_cnt;
 
-    spi_device_polling_transmit(spi, &(*display_data.curr)[tube_cnt]);
+    enum blinkPeriod = 500;
+    __gshared static int blinkTime = blinkPeriod;
+
+    spi_transaction_t empty_char;
+    empty_char.length = 4 + 5*4;
+    empty_char.flags = SPI_TRANS_USE_TXDATA;
+
+    if(display_data.blinkFlag[tube_cnt] && blinkTime < 0)
+    {
+        empty_char.setTubeSegments(tube_cnt, 0);
+        spi_device_polling_transmit(spi, &empty_char);
+    }
+    else
+        spi_device_polling_transmit(spi, &(*display_data.curr)[tube_cnt]);
 
     tube_cnt++;
     if(tube_cnt >= DisplBuff.length)
@@ -324,6 +339,10 @@ extern(C) ubyte display_one_symbol(gptimer_handle_t timer, const gptimer_alarm_e
 
             display_data.needSwapBuff = false;
         }
+
+        blinkTime--;
+        if(blinkTime <= -blinkPeriod)
+            blinkTime = blinkPeriod;
     }
 
     return 0;

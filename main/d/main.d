@@ -75,6 +75,9 @@ extern(C) void app_main()
     configure_led();
     configure_displ();
 
+    display_data.putLine(cast(wchar[16]) "abcdefasdfgzxcvbx");
+    display_data.updateDisplayedData();
+
     immutable wstring str =
         "                "~
         "This is a test, please wait"~
@@ -86,8 +89,9 @@ extern(C) void app_main()
         blink_led();
         s_led_state = !s_led_state;
 
-        display_data.putLine(str[cnt .. cnt + 16]);
-        display_data.updateDisplayedData();
+        //~ display_data.putLine(str[cnt .. cnt + 16]);
+        //~ display_data.putLine(cast(wchar[16]) "abcdefasdfgzxcvbx");
+        //~ display_data.updateDisplayedData();
 
         cnt++;
         if(cnt >= str.length - 16)
