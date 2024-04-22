@@ -43,6 +43,22 @@ enum g = g1|g2;
 
 immutable uint[] numbers =
 [
+    0x0,                // space
+    f|e|dpl,            //!
+    i|b,                //"
+    f|e|i|l|g|d,        //#
+    a|f|g|c|d|i|l,      //$
+    f|a1|i|g|l|c|d2|k|j,//%
+    a1|i|g1|e|d|h|m,    //&
+    i,                  //'
+    j|m,                //(
+    h|k,                //)
+    i|l|g|h|j|k|m,      //*
+    i|l|g,              //+
+    dpl,                //,
+    g,                  //-
+    dpl,                //.
+    j|k,                // /
     a|d|f|e|b|c|j|k,    //0
     a1|i|l|d,           //1
     a|b|g|e|d,          //2
@@ -53,6 +69,13 @@ immutable uint[] numbers =
     a|j|l,              //7
     a|d|f|e|b|c|g,      //8
     a|d|f|b|c|g,        //9
+    f|e,                //:
+    e|dpl,              //;
+    j|m,                //<
+    g|d,                //=
+    h|k,                //>
+    dpl|k|g2|b|a,       //?
+    a|f|e|d|b|g2|i,     //@
 ];
 
 immutable uint[] latin =
@@ -83,6 +106,16 @@ immutable uint[] latin =
     h|m|k|j,            //X
     h|j|l,              //Y
     a|d|k|j,            //Z
+];
+
+immutable uint[] spec =
+[
+    a2|i|l|d2,  //[
+    h|m,        //\
+    a1|i|l|d1,  //]
+    f|a|b,      //^
+    d,          //_
+    h,          //`
 ];
 
 immutable uint[] cyrillic =
@@ -125,21 +158,22 @@ uint utf2seg(in wchar c) pure
 {
     uint ret;
 
-    if(c == 0x0020) // space;
-    {
-    }
-    else if(c >= 0x0030 && c <= 0x0039)
-        ret = numbers[c - 0x0030];
+    if(c >= 0x0020 && c <= 0x0040)
+        ret = numbers[c - 0x0020];
     else if(c >= 0x0041 && c <= 0x005a)
         ret = latin[c - 0x0041];
-    else if(c >= 0x0061 && c <= 0x007a) //TODO: implement lowercase chars table
+    else if(c >= 0x005b && c <= 0x0060)
+        ret = spec[c - 0x005b];
+    else if(c >= 0x0061 && c <= 0x007a) //TODO: implement lowercase Latin chars table
         ret = latin[c - 0x0061];
-    else if(c >= 0x0410 && c <= 0x422f)
+    else if(c >= 0x0410 && c <= 0x042f) // Cyrillic upperrcase
         ret = cyrillic[c - 0x0410];
-    else if(c == 0x0401) // Cyrillic "Ё" spicial case
+    else if(c >= 0x0430 && c <= 0x044f) // Same table for Cyrillic lowercase
+        ret = cyrillic[c - 0x0430];
+    else if(c == 0x0401 || c == 0x0451) // Cyrillic "Ё" and "ё" spicial case
         ret = cyrillic[5]; // "Е"
-    //~ else
-        //~ ret = 0b01111111_00101010; // unknown symbol marking (cross in square)
+    else
+        ret = dpl|dpr; // unknown symbol marking
 
     return ret;
 }
